@@ -2,54 +2,150 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>方向角計算</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>測量 方向角計算</title>
 </head>
 
 <body>
 
-<h1>方向角計算</h1>
+<h2>測量 方向角・距離計算</h2>
 
-<p>測点X</p>
-<input id="sx">
-
-<p>測点Y</p>
-<input id="sy">
-
-<p>Back点X</p>
-<input id="bx">
-
-<p>Back点Y</p>
-<input id="by">
-
+測点X：<input id="sx" onkeydown="if(event.key==='Enter') document.getElementById('sy').focus();">
+<br>
+測点Y：<input id="sy" onkeydown="if(event.key==='Enter') document.getElementById('bx').focus();">
+<br>
+BackX：<input id="bx" onkeydown="if(event.key==='Enter') document.getElementById('by').focus();">
+<br>
+BackY：<input id="by" onkeydown="if(event.key==='Enter') calc();">
 <br><br>
 
 <button onclick="calc()">計算</button>
+<button onclick="reusePoint()">測点引継ぎ</button>
+<hr style="width:300px;">
 
-<hr>
+<div id="result"></div>
 
-<p id="result"></p>
+<canvas id="map" width="300" height="300" style="border:1px solid black;"></canvas>
 
 <script>
 
+let lastSx = "";
+let lastSy = "";
+
 function calc() {
 
+    // ===== 入力 =====
     let sx = Number(document.getElementById("sx").value);
     let sy = Number(document.getElementById("sy").value);
-
     let bx = Number(document.getElementById("bx").value);
     let by = Number(document.getElementById("by").value);
 
-    let dx = sx - bx;
-    let dy = sy - by;
+    // ===== 計算（測量仕様：Back → 測点） =====
+    let dx = bx - sx;
+    let dy = by - sy;
 
     let distance = Math.sqrt(dx*dx + dy*dy);
 
+    let angle = Math.atan(dy / dx) * 180 / Math.PI;
+
+if(dx < 0){
+    angle += 180;
+}
+else if(dy < 0){
+    angle += 360;
+}
+    if (angle < 0) angle += 360;
+
+    // ===== DMS =====
+    let d = Math.floor(angle);
+    let m = Math.floor((angle - d) * 60);
+    let s = Math.round((angle - d - m/60) * 3600);
+
+    let direction = `${d}°${m}′${s}″`;
+
+    // ===== 表示 =====
     document.getElementById("result").innerHTML =
-        "点間距離 = " + distance.toFixed(3) + " m";
+    "<b>入力値</b><br>" +
+    "測点X = " + sx + "<br>" +
+    "測点Y = " + sy + "<br>" +
+    "BackX = " + bx + "<br>" +
+    "BackY = " + by + "<br><br>" +
+
+    "<b>計算結果</b><br>" +
+    "方向角 = " + direction + "<br>" +
+    "点間距離 = " + distance.toFixed(3) ;
+    // ===== 描画 =====
+    let canvas = document.getElementById("map");
+    let ctx = canvas.getContext("2d");
+
+    ctx.clearRect(0,0,400,400);
+
+    // 北（補助線）
+    ctx.setLineDash([5,5]);
+    ctx.beginPath();
+    ctx.moveTo(200, 300);
+    ctx.lineTo(200, 50);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillText("N(0°)", 205, 60);
+
+    // 中心（Back固定）
+    let x1 = 200;
+    let y1 = 200;
+
+    let rad = angle * Math.PI / 180;
+
+    let x2 = x1 + Math.sin(rad) * 120;
+    let y2 = y1 - Math.cos(rad) * 120;
+
+    // 線
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+
+    // 点
+    ctx.beginPath();
+    ctx.arc(x1, y1, 5, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(x2, y2, 5, 0, Math.PI*2);
+    ctx.fill();
+
+    // ラベル
+    ctx.fillText("Back", x1+10, y1);
+    ctx.fillText("測点", x2+10, y2);
+
+    // 距離表示
+    let mx = (x1 + x2)/2;
+    let my = (y1 + y2)/2;
+    ctx.fillText(distance.toFixed(2) + " m", mx+5, my);
+
+    // 角度表示
+    ctx.fillText(direction, x2+10, y2-10);
+    lastSx = sx;
+lastSy = sy;
+    document.getElementById("sx").focus();
+    document.getElementById("sx").value = "";
+document.getElementById("sy").value = "";
+document.getElementById("bx").value = "";
+document.getElementById("by").value = "";
+
+document.getElementById("sx").focus();
+}
+function reusePoint(){
+
+    document.getElementById("sx").value = lastSx;
+    document.getElementById("sy").value = lastSy;
+
+    document.getElementById("bx").focus();
 
 }
-
 </script>
 
-</body>
+<body style="max-width:500px; margin:auto;">
 </html>

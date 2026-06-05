@@ -55,12 +55,12 @@ onkeydown="if(event.key==='Enter') calc();">
 
 <div id="result" tabindex="-1"></div>
 
-<div style="text-align:center;">
+<div style="display:flex; justify-content:center;">
 
 <canvas id="map"
 width="300"
 height="300"
-style="border:1px solid black;">
+style="border:1px solid black; display:block;">
 </canvas>
 
 </div>
@@ -154,58 +154,56 @@ else if(dy < 0){
     "方向角 = " + direction + "<br>" +
     "点間距離 = " + distance.toFixed(3) ;
     // ===== 描画 =====
-    let canvas = document.getElementById("map");
-    let ctx = canvas.getContext("2d");
+let canvas = document.getElementById("map");
+let ctx = canvas.getContext("2d");
 
-    ctx.clearRect(0,0,400,400);
+ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 北（補助線）
-    ctx.setLineDash([5,5]);
-    ctx.beginPath();
-    ctx.moveTo(200, 300);
-    ctx.lineTo(200, 50);
-    ctx.stroke();
-    ctx.setLineDash([]);
+// 北（補助線）
+ctx.setLineDash([5,5]);
+ctx.beginPath();
+ctx.moveTo(canvas.width/2, canvas.height);
+ctx.lineTo(canvas.width/2, 0);
+ctx.stroke();
+ctx.setLineDash([]);
 
-    ctx.fillText("N(0°)", 205, 60);
+ctx.fillText("N(0°)", canvas.width/2 + 5, 15);
 
-    // 中心（Back固定）
-    let x1 = 200;
-    let y1 = 200;
+// 中心
+let x1 = canvas.width / 2;
+let y1 = canvas.height / 2;
 
-    let rad = angle * Math.PI / 180;
+let rad = angle * Math.PI / 180;
 
-    let x2 = x1 + Math.sin(rad) * 120;
-    let y2 = y1 - Math.cos(rad) * 120;
+let x2 = x1 + Math.sin(rad) * 120;
+let y2 = y1 - Math.cos(rad) * 120;
 
-    // 線
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
+// 線
+ctx.beginPath();
+ctx.moveTo(x1, y1);
+ctx.lineTo(x2, y2);
+ctx.stroke();
 
-    // 点
-    ctx.beginPath();
-    ctx.arc(x1, y1, 5, 0, Math.PI*2);
-    ctx.fill();
+// 点
+ctx.beginPath();
+ctx.arc(x1, y1, 5, 0, Math.PI*2);
+ctx.fill();
 
-    ctx.beginPath();
-    ctx.arc(x2, y2, 5, 0, Math.PI*2);
-    ctx.fill();
+ctx.beginPath();
+ctx.arc(x2, y2, 5, 0, Math.PI*2);
+ctx.fill();
 
-    // ラベル
-    ctx.fillText("測点", x1+10, y1);
-    ctx.fillText("Back", x2+10, y2);
+// ラベル
+ctx.fillText("測点", x1 + 10, y1);
+ctx.fillText("Back", x2 + 10, y2);
 
-    // 距離表示
-    let mx = (x1 + x2)/2;
-    let my = (y1 + y2)/2;
-    ctx.fillText(distance.toFixed(3) + " m", mx+5, my);
+// 距離
+let mx = (x1 + x2) / 2;
+let my = (y1 + y2) / 2;
+ctx.fillText(distance.toFixed(3) + " m", mx + 5, my);
 
-    // 角度表示
-    ctx.fillText(direction, x2+10, y2-10);
-    lastSx = sx;
-lastSy = sy;
+// 角度
+ctx.fillText(direction, x2 + 10, y2 - 10);
     document.getElementById("sx").focus();
     document.getElementById("sx").value = "";
 document.getElementById("sy").value = "";

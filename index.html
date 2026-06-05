@@ -31,17 +31,26 @@ button{
 測量 ST計算　簡易アプリ o2
 </h2>
 
-測点X：<input id="sx" onkeydown="if(event.key==='Enter') document.getElementById('sy').focus();">
-<br>
-測点Y：<input id="sy" onkeydown="if(event.key==='Enter') document.getElementById('bx').focus();">
-<br>
-BackX：<input id="bx" onkeydown="if(event.key==='Enter') document.getElementById('by').focus();">
-<br>
-BackY：<input id="by" onkeydown="if(event.key==='Enter') calc();">
+測点X：<input id="sx"
+oninput="clearError()"
+onkeydown="if(event.key==='Enter') document.getElementById('sy').focus();">
+
+測点Y：<input id="sy"
+oninput="clearError()"
+onkeydown="if(event.key==='Enter') document.getElementById('bx').focus();">
+
+BackX：<input id="bx"
+oninput="clearError()"
+onkeydown="if(event.key==='Enter') document.getElementById('by').focus();">
+
+BackY：<input id="by"
+oninput="clearError()"
+onkeydown="if(event.key==='Enter') calc();">
 <br><br>
 
 <button onclick="calc()">計算</button>
 <button onclick="reusePoint()">測点座標の引継ぎ</button>
+<button onclick="resetInput()">入力リセット</button>
 <hr style="width:300px;">
 
 <div id="result" tabindex="-1"></div>
@@ -59,15 +68,57 @@ style="border:1px solid black;">
 
 let lastSx = "";
 let lastSy = "";
+function clearError(){
 
+    document.getElementById("sx").style.border = "";
+    document.getElementById("sy").style.border = "";
+    document.getElementById("bx").style.border = "";
+    document.getElementById("by").style.border = "";
+}
+function resetInput(){
+
+    document.getElementById("sx").value = "";
+    document.getElementById("sy").value = "";
+    document.getElementById("bx").value = "";
+    document.getElementById("by").value = "";
+
+    clearError();
+
+    document.getElementById("sx").focus();
+}
 function calc() {
 
-    // ===== 入力 =====
-    let sx = Number(document.getElementById("sx").value);
-    let sy = Number(document.getElementById("sy").value);
-    let bx = Number(document.getElementById("bx").value);
-    let by = Number(document.getElementById("by").value);
+    let sx = document.getElementById("sx").value;
+    let sy = document.getElementById("sy").value;
+    let bx = document.getElementById("bx").value;
+    let by = document.getElementById("by").value;
 
+    // ■ 数値チェック
+    if (
+    sx === "" || sy === "" || bx === "" || by === "" ||
+    isNaN(Number(sx)) || isNaN(Number(sy)) ||
+    isNaN(Number(bx)) || isNaN(Number(by))
+) {
+
+    // ■ エラー表示
+    document.getElementById("result").innerHTML =
+        "<span style='color:red; font-weight:bold;'>入力エラー：数値を入力してください</span>";
+
+    // ■ 入力欄を赤くする
+    document.getElementById("sx").style.border = "2px solid red";
+    document.getElementById("sy").style.border = "2px solid red";
+    document.getElementById("bx").style.border = "2px solid red";
+    document.getElementById("by").style.border = "2px solid red";
+
+    document.getElementById("result").focus();
+    return;
+}
+
+    // 数値化（ここで初めて変換）
+    sx = Number(sx);
+    sy = Number(sy);
+    bx = Number(bx);
+    by = Number(by);
     // ===== 計算（測量仕様：Back → 測点） =====
     let dx = bx - sx;
     let dy = by - sy;

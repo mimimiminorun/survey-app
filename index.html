@@ -7,10 +7,29 @@
 
 <title>測量 方向角計算</title>
 </head>
+<style>
 
+input{
+    width:100%;
+    box-sizing:border-box;
+    font-size:20px;
+    padding:10px;
+    margin-bottom:10px;
+}
+
+button{
+    width:100%;
+    font-size:22px;
+    padding:12px;
+    margin-top:10px;
+}
+
+</style>
 <body>
 
-<h2>測量 方向角・距離計算</h2>
+<h2 style="text-align:center;">
+測量 方向角・距離計算
+</h2>
 
 測点X：<input id="sx" onkeydown="if(event.key==='Enter') document.getElementById('sy').focus();">
 <br>
@@ -27,8 +46,15 @@ BackY：<input id="by" onkeydown="if(event.key==='Enter') calc();">
 
 <div id="result"></div>
 
-<canvas id="map" width="300" height="300" style="border:1px solid black;"></canvas>
+<div style="text-align:center;">
 
+<canvas id="map"
+width="300"
+height="300"
+style="border:1px solid black;">
+</canvas>
+
+</div>
 <script>
 
 let lastSx = "";
@@ -147,5 +173,10 @@ function reusePoint(){
 }
 </script>
 
-<body style="max-width:500px; margin:auto;">
+<body style="
+max-width:700px;
+margin:auto;
+padding:20px;
+font-size:18px;
+">
 </html>

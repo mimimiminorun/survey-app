@@ -28,7 +28,7 @@ button{
 <body>
 
 <h2 style="text-align:center;">
-測量 ST計算　簡易アプリ
+測量 ST計算　簡易アプリ o2
 </h2>
 
 測点X：<input id="sx" onkeydown="if(event.key==='Enter') document.getElementById('sy').focus();">
@@ -41,10 +41,10 @@ BackY：<input id="by" onkeydown="if(event.key==='Enter') calc();">
 <br><br>
 
 <button onclick="calc()">計算</button>
-<button onclick="reusePoint()">測点引継ぎ</button>
+<button onclick="reusePoint()">測点座標の引継ぎ</button>
 <hr style="width:300px;">
 
-<div id="result"></div>
+<div id="result" tabindex="-1"></div>
 
 <div style="text-align:center;">
 
@@ -143,13 +143,13 @@ else if(dy < 0){
     ctx.fill();
 
     // ラベル
-    ctx.fillText("Back", x1+10, y1);
-    ctx.fillText("測点", x2+10, y2);
+    ctx.fillText("測点", x1+10, y1);
+    ctx.fillText("Back", x2+10, y2);
 
     // 距離表示
     let mx = (x1 + x2)/2;
     let my = (y1 + y2)/2;
-    ctx.fillText(distance.toFixed(2) + " m", mx+5, my);
+    ctx.fillText(distance.toFixed(3) + " m", mx+5, my);
 
     // 角度表示
     ctx.fillText(direction, x2+10, y2-10);
@@ -161,7 +161,23 @@ document.getElementById("sy").value = "";
 document.getElementById("bx").value = "";
 document.getElementById("by").value = "";
 
-document.getElementById("sx").focus();
+// 入力クリア
+document.getElementById("sx").value = "";
+document.getElementById("sy").value = "";
+document.getElementById("bx").value = "";
+document.getElementById("by").value = "";
+
+// フォーカス制御（スマホ判定）
+if (window.innerWidth <= 768) {
+    document.getElementById("result").focus();
+} else {
+    document.getElementById("sx").focus();
+}
+if (window.innerWidth <= 768) {
+    document.getElementById("result").focus();
+} else {
+    document.getElementById("sx").focus();
+}
 }
 function reusePoint(){
 

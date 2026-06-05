@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>方向角計算</title>
+</head>
+
+<body>
+
+<h1>方向角計算</h1>
+
+<p>測点X</p>
+<input id="sx">
+
+<p>測点Y</p>
+<input id="sy">
+
+<p>Back点X</p>
+<input id="bx">
+
+<p>Back点Y</p>
+<input id="by">
+
+<br><br>
+
+<button onclick="calc()">計算</button>
+
+<hr>
+
+<p id="result"></p>
+
+<script>
+
+function calc() {
+
+    let sx = Number(document.getElementById("sx").value);
+    let sy = Number(document.getElementById("sy").value);
+
+    let bx = Number(document.getElementById("bx").value);
+    let by = Number(document.getElementById("by").value);
+
+    let dx = sx - bx;
+    let dy = sy - by;
+
+    let distance = Math.sqrt(dx*dx + dy*dy);
+
+    document.getElementById("result").innerHTML =
+        "点間距離 = " + distance.toFixed(3) + " m";
+
+}
+
+</script>
+
+</body>
+</html>

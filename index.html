@@ -204,6 +204,10 @@ ctx.fillText(distance.toFixed(3) + " m", mx + 5, my);
 
 // 角度
 ctx.fillText(direction, x2 + 10, y2 - 10);
+
+// 引継ぎ用保存
+lastSx = document.getElementById("sx").value;
+lastSy = document.getElementById("sy").value;
     document.getElementById("sx").focus();
     document.getElementById("sx").value = "";
 document.getElementById("sy").value = "";

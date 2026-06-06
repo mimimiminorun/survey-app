@@ -194,8 +194,8 @@ ctx.arc(x2, y2, 5, 0, Math.PI*2);
 ctx.fill();
 
 // ラベル
-ctx.fillText("測点", x1 + 10, y1);
-ctx.fillText("Back", x2 + 10, y2);
+ctx.fillText("測点(" + sx + "," + sy + ")", x1 + 10, y1);
+ctx.fillText("Back(" + bx + "," + by + ")", x2 + 10, y2);
 
 // 距離
 let mx = (x1 + x2) / 2;

@@ -33,24 +33,100 @@ button{
 
 測点X：<input id="sx"
 oninput="clearError()"
-onkeydown="if(event.key==='Enter') document.getElementById('sy').focus();">
+onkeydown="
+if(event.key==='Enter' ||
+   event.key==='ArrowRight' ||
+   event.key==='ArrowDown')
+document.getElementById('sy').focus();
+
+if(event.key==='ArrowLeft' ||
+   event.key==='ArrowUp')
+document.getElementById('resetBtn').focus();
+">
 
 測点Y：<input id="sy"
 oninput="clearError()"
-onkeydown="if(event.key==='Enter') document.getElementById('bx').focus();">
+onkeydown="
+if(event.key==='Enter' ||
+   event.key==='ArrowRight' ||
+   event.key==='ArrowDown')
+document.getElementById('bx').focus();
+
+if(event.key==='ArrowLeft' ||
+   event.key==='ArrowUp')
+document.getElementById('sx').focus();
+">
 
 BackX：<input id="bx"
 oninput="clearError()"
-onkeydown="if(event.key==='Enter') document.getElementById('by').focus();">
+onkeydown="
+if(event.key==='Enter' ||
+   event.key==='ArrowRight' ||
+   event.key==='ArrowDown')
+document.getElementById('by').focus();
+
+if(event.key==='ArrowLeft' ||
+   event.key==='ArrowUp')
+document.getElementById('sy').focus();
+">
 
 BackY：<input id="by"
 oninput="clearError()"
-onkeydown="if(event.key==='Enter') calc();">
+onkeydown="
+if(event.key==='Enter')
+calc();
+
+if(event.key==='ArrowRight' ||
+   event.key==='ArrowDown')
+document.getElementById('calcBtn').focus();
+
+if(event.key==='ArrowLeft' ||
+   event.key==='ArrowUp')
+document.getElementById('bx').focus();
+">
 <br><br>
 
-<button onclick="calc()">計算</button>
-<button onclick="reusePoint()">測点座標の引継ぎ</button>
-<button onclick="resetInput()">入力値リセット</button>
+<button id="calcBtn"
+onclick="calc()"
+onkeydown="
+if(event.key==='ArrowRight' ||
+   event.key==='ArrowDown')
+document.getElementById('reuseBtn').focus();
+
+if(event.key==='ArrowLeft' ||
+   event.key==='ArrowUp')
+document.getElementById('by').focus();
+">
+計算
+</button>
+
+<button id="reuseBtn"
+onclick="reusePoint()"
+onkeydown="
+if(event.key==='ArrowRight' ||
+   event.key==='ArrowDown')
+document.getElementById('resetBtn').focus();
+
+if(event.key==='ArrowLeft' ||
+   event.key==='ArrowUp')
+document.getElementById('calcBtn').focus();
+">
+測点座標の引継ぎ
+</button>
+
+<button id="resetBtn"
+onclick="resetInput()"
+onkeydown="
+if(event.key==='ArrowRight' ||
+   event.key==='ArrowDown')
+document.getElementById('sx').focus();
+
+if(event.key==='ArrowLeft' ||
+   event.key==='ArrowUp')
+document.getElementById('reuseBtn').focus();
+">
+入力値リセット
+</button>
 <hr style="width:300px;">
 
 <div id="result" tabindex="-1"></div>
@@ -81,7 +157,7 @@ function resetInput(){
     document.getElementById("sy").value = "";
     document.getElementById("bx").value = "";
     document.getElementById("by").value = "";
-
+    document.getElementById("result").innerHTML = "";
     clearError();
 
     document.getElementById("sx").focus();
@@ -200,7 +276,7 @@ ctx.fillText("Back(" + bx + "," + by + ")", x2 + 10, y2);
 // 距離
 let mx = (x1 + x2) / 2;
 let my = (y1 + y2) / 2;
-ctx.fillText(distance.toFixed(3) , mx + 5, my);
+ctx.fillText(distance.toFixed(3), mx + 5, my);
 
 // 角度
 ctx.fillText(direction, x2 + 10, y2 - 10);
@@ -209,10 +285,6 @@ ctx.fillText(direction, x2 + 10, y2 - 10);
 lastSx = document.getElementById("sx").value;
 lastSy = document.getElementById("sy").value;
     document.getElementById("sx").focus();
-    document.getElementById("sx").value = "";
-document.getElementById("sy").value = "";
-document.getElementById("bx").value = "";
-document.getElementById("by").value = "";
 
 // 入力クリア
 document.getElementById("sx").value = "";
@@ -224,7 +296,7 @@ document.getElementById("by").value = "";
 if (window.innerWidth <= 768) {
     document.getElementById("result").focus();
 } else {
-    document.getElementById("sx").focus();
+    document.getElementById('sx').focus();
 }
 }
 function reusePoint(){
@@ -235,7 +307,7 @@ function reusePoint(){
     document.getElementById("bx").focus();
 
 }
-    if ("serviceWorker" in navigator) {
+ if ("serviceWorker" in navigator) {
 
     navigator.serviceWorker.register(
         "service-worker.js"

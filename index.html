@@ -9,31 +9,70 @@
 </head>
 <style>
 
+<style>
+
+body{
+    max-width:700px;
+    margin:auto;
+    padding:200px 20px;
+    font-size:18px;
+    font-family:
+    "Yu Gothic",
+    "Meiryo",
+    sans-serif;
+    background:#f0f4f8;
+}
+
 input{
     width:100%;
     box-sizing:border-box;
     font-size:20px;
     padding:10px;
     margin-bottom:10px;
+    border:1px solid #a8c7a8;
+    border-radius:8px;
+    background:white;
+}
+body{
+    background:#eef6ee;
 }
 
+button{
+    background:#6fa86f;
+    color:white;
+
+    border:none;
+    border-radius:10px;
+}
+
+button:hover{
+    background:#629862;
+}
 button{
     width:100%;
     font-size:22px;
     padding:12px;
     margin-top:10px;
+
+    cursor:pointer;
+}
+button:hover{
+    opacity:0.9;
 }
 
+button:active{
+    transform:scale(0.98);
+}
 </style>
-<body style="
-max-width:700px;
-margin:auto;
-padding:20px;
-font-size:18px;
-">
 
-<h2 style="text-align:center;">
-測量 ST計算　簡易アプリ o2
+</style>
+
+<h2 style="
+text-align:center;
+font-size:32px;
+margin-bottom:30px;
+">
+📐 測量 ST計算
 </h2>
 
 測点X：<input id="sx"
@@ -321,5 +360,4 @@ function reusePoint(){
 }
 </script>
 
-</html>
 </html>

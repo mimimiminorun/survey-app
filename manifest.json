@@ -1,0 +1,8 @@
+{
+  "name": "測量 ST計算",
+  "short_name": "ST計算",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff"
+}

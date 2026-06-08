@@ -256,9 +256,21 @@ else if(dy < 0){
     if (angle < 0) angle += 360;
 
     // ===== DMS =====
-    let d = Math.floor(angle);
-    let m = Math.floor((angle - d) * 60);
-    let s = Math.round((angle - d - m/60) * 3600);
+let d = Math.floor(angle);
+let m = Math.floor((angle - d) * 60);
+let s = Math.round((angle - d - m/60) * 3600);
+
+// 秒が60になったら繰り上げ
+if(s === 60){
+    s = 0;
+    m++;
+}
+
+// 分が60になったら繰り上げ
+if(m === 60){
+    m = 0;
+    d++;
+}
 
     let direction = `${d}°${m}′${s}″`;
 
@@ -361,3 +373,5 @@ function reusePoint(){
 </script>
 
 </html>
+
+

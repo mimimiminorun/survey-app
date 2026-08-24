@@ -239,7 +239,7 @@ function calc() {
     sy = Number(sy);
     bx = Number(bx);
     by = Number(by);
-    // ===== 計算（測量仕様：Back → 測点） =====
+    // ===== 計算（測量仕様：終点 → 始点） =====
     let dx = bx - sx;
     let dy = by - sy;
 
@@ -326,8 +326,8 @@ ctx.arc(x2, y2, 5, 0, Math.PI*2);
 ctx.fill();
 
 // ラベル
-ctx.fillText("測点(" + sx + "," + sy + ")", x1 + 10, y1);
-ctx.fillText("Back(" + bx + "," + by + ")", x2 + 10, y2);
+ctx.fillText("始点(" + sx + "," + sy + ")", x1 + 10, y1);
+ctx.fillText("終点(" + bx + "," + by + ")", x2 + 10, y2);
 
 // 距離
 let mx = (x1 + x2) / 2;

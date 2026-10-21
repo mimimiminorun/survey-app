@@ -1,11 +1,10 @@
 {
-  "name": "測量 ST計算",
-  "short_name": "ST計算",
+  "name": "測量計算アプリ",
+  "short_name": "測量計算",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
-
+  "background_color": "#f3f6f4",
+  "theme_color": "#477b58",
   "icons": [
     {
       "src": "favicon.png",

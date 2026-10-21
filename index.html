@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="favicon.png">
 <link rel="manifest" href="manifest.json">
-<title>測量計算アプリ</title>
+<title>測量計算アプリ Ver2.1</title>
 <style>
 :root{--green:#477b58;--green2:#e8f1e9;--line:#cbd5ce;--ink:#1f2933;--muted:#5b6570;--bg:#f3f6f4}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic","Meiryo",sans-serif;font-size:16px}
@@ -36,7 +36,7 @@ table{border-collapse:collapse;width:100%;font-size:13px;background:#fff}th,td{b
 </head>
 <body>
 <header>
-<h1>📐 測量計算アプリ</h1>
+<h1>📐 測量計算アプリ <span style="font-size:14px;font-weight:700;color:#477b58;vertical-align:middle">Ver2.1</span></h1>
 <nav>
 <button class="tab active" id="tabST" onclick="switchPage('st')">ST計算</button>
 <button class="tab" id="tabBoundary" onclick="switchPage('boundary')">境界測量</button>
@@ -202,7 +202,9 @@ async function downloadPDF(){
  const plotSvg=area.querySelector('.pdf-plot-page svg');
  if(plotSvg){plotSvg.style.cssText='display:block;width:100%;height:auto;max-height:none;margin:0;border:0';plotSvg.setAttribute('width','100%');plotSvg.removeAttribute('height');}
  try{
-  area.style.cssText=`display:block!important;position:fixed;left:0;top:0;z-index:2147483647;visibility:visible;opacity:1;pointer-events:none;width:${pageWidth}mm;background:#fff;color:#111;`;
+  area.style.cssText=`display:block!important;position:absolute;left:0;top:0;z-index:2147483647;visibility:visible;opacity:1;pointer-events:none;width:${pageWidth}mm;min-height:${pageHeight}mm;background:#fff;color:#111;transform:none;`;
+  area.getBoundingClientRect();
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   if(document.fonts&&document.fonts.ready) await document.fonts.ready;
   await html2pdf().set({
    margin:0,

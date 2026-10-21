@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="favicon.png">
 <link rel="manifest" href="manifest.json">
-<title>測量計算アプリ Ver2.2</title>
+<title>測量計算アプリ Ver2.3</title>
 <style>
 :root{--green:#477b58;--green2:#e8f1e9;--line:#cbd5ce;--ink:#1f2933;--muted:#5b6570;--bg:#f3f6f4}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic","Meiryo",sans-serif;font-size:16px}
@@ -36,7 +36,7 @@ table{border-collapse:collapse;width:100%;font-size:13px;background:#fff}th,td{b
 </head>
 <body>
 <header>
-<h1>📐 測量計算アプリ <span style="font-size:14px;font-weight:700;color:#477b58;vertical-align:middle">Ver2.2</span></h1>
+<h1>📐 測量計算アプリ <span style="font-size:14px;font-weight:700;color:#477b58;vertical-align:middle">Ver2.3</span></h1>
 <nav>
 <button class="tab active" id="tabST" onclick="switchPage('st')">ST計算</button>
 <button class="tab" id="tabBoundary" onclick="switchPage('boundary')">境界測量</button>
@@ -82,7 +82,7 @@ table{border-collapse:collapse;width:100%;font-size:13px;background:#fff}th,td{b
 <div class="grid"><div><label for="paper">用紙サイズ</label><select id="paper" onchange="renderPlot()"><option>A4</option><option>A3</option></select></div><div><label for="scale">縮尺</label><select id="scale" onchange="renderPlot()"><option value="250">1/250</option><option value="500" selected>1/500</option><option value="1000">1/1000</option><option value="2500">1/2500</option><option value="5000">1/5000</option></select></div></div>
 <p id="plotInfo" class="hint"></p><svg id="plot" viewBox="0 0 900 600" role="img" aria-label="測点プロット図"></svg>
 <div class="actions"><button onclick="downloadSima()">SIMAデータを保存</button><button onclick="downloadPDF()">PDFを保存</button></div>
-<p class="hint">SIMAデータには計算した測点の点名・X・Y座標を出力します。Z座標は0.000です。PDFを端末に直接保存します。</p>
+<p class="hint">SIMAデータには計算した測点の点名・X・Y座標を出力します。Z座標は0.000です。PDFを保存するには、印刷画面で「PDFとして保存」を選択してください。</p>
 </div>
 </div>
 </section>
@@ -173,15 +173,23 @@ function downloadPDF(){
  const obs=document.getElementById('observationTable').outerHTML;
  const coords=document.getElementById('coordinateTable').outerHTML;
  const svg=document.getElementById('plot').outerHTML;
- const paper=document.getElementById('paper').value;
- const area=document.getElementById('printArea');
- let style=document.getElementById('dynamicPrintStyle');
- if(!style){style=document.createElement('style');style.id='dynamicPrintStyle';document.head.appendChild(style)}
- style.textContent=`@media print{@page{size:${paper} landscape;margin:0}body{background:#fff!important}header,main,#stPage,#boundaryPage{display:none!important}#printArea{display:block!important;position:static!important;visibility:visible!important;width:auto!important;background:#fff!important;color:#111!important;padding:0!important;margin:0!important}#printArea .print-page{box-sizing:border-box;width:${paper==='A3'?420:297}mm;min-height:${paper==='A3'?297:210}mm;padding:8mm;margin:0;background:#fff;color:#111;page-break-after:always;break-after:page;overflow:visible}#printArea .print-page:last-child{page-break-after:auto;break-after:auto}#printArea .plot-print-page{padding:0;width:${paper==='A3'?420:297}mm;height:${paper==='A3'?297:210}mm;min-height:0;overflow:hidden}#printArea .plot-print-page h2,#printArea .plot-print-page .meta{display:none!important}#printArea .plot-print-page svg{display:block;width:${paper==='A3'?420:297}mm;height:${paper==='A3'?297:210}mm;max-height:none;border:0;border-radius:0}#printArea table{border-collapse:collapse;width:100%;font-size:7pt;color:#111}#printArea th,#printArea td{border:0.25mm solid #666;padding:1mm 0.7mm;white-space:normal;overflow-wrap:anywhere;word-break:break-word}#printArea th{background:#e9edf0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}#printArea h2{text-align:center;font-size:14pt;margin:0 0 4mm}#printArea .meta{margin:0 0 3mm;font-size:8pt;line-height:1.35}}`;
- area.innerHTML=`<div class="print-page"><h2>境界測量　観測手簿</h2><div class="meta">器械点：${escapeHTML(d.station)}<br>器械点 X=${d.sx.toFixed(3)}　Y=${d.sy.toFixed(3)}<br>後視点：${escapeHTML(d.backsight)}<br>後視点 X=${d.bx.toFixed(3)}　Y=${d.by.toFixed(3)}<br>縮尺係数：${d.factor.toFixed(6)}　後視点までの水平距離：${d.backDistance.toFixed(3)} m</div>${obs}</div><div class="print-page"><h2>放射法測点座標計算簿</h2><div class="meta">器械点：${escapeHTML(d.station)}<br>既知点方向角 T：${dmsFormat(d.base)}　縮尺係数：${d.factor.toFixed(6)}</div>${coords}</div><div class="print-page plot-print-page">${svg}</div>`;
+ const paper=document.getElementById('paper').value==='A3'?'A3':'A4';
+ const pageW=paper==='A3'?420:297, pageH=paper==='A3'?297:210;
+ // Save all current input/calculation data before opening the print view.
  saveLocalNow();
- window.print();
-} 
+ // Use a separate document so the app's screen CSS, hidden tabs, and service-worker page cache
+ // cannot hide the print content. This intentionally uses the browser's native print dialog.
+ const printWindow=window.open('','_blank');
+ if(!printWindow){alert('印刷用画面を開けませんでした。ブラウザでこのサイトのポップアップを許可してください。');return;}
+ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const pageMeta1=`器械点：${esc(d.station)}<br>器械点 X=${Number(d.sx).toFixed(3)}　Y=${Number(d.sy).toFixed(3)}<br>後視点：${esc(d.backsight)}<br>後視点 X=${Number(d.bx).toFixed(3)}　Y=${Number(d.by).toFixed(3)}<br>縮尺係数：${Number(d.factor).toFixed(6)}　後視点までの水平距離：${Number(d.backDistance).toFixed(3)} m`;
+ const pageMeta2=`器械点：${esc(d.station)}<br>既知点方向角 T：${esc(dmsFormat(d.base))}　縮尺係数：${Number(d.factor).toFixed(6)}`;
+ const html=`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>境界測量 PDF</title><style>
+ @page{size:${paper} landscape;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,"Yu Gothic","Meiryo",sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}.print-page{box-sizing:border-box;width:${pageW}mm;height:${pageH}mm;padding:8mm;overflow:hidden;page-break-after:always;break-after:page;background:#fff}.print-page:last-child{page-break-after:auto;break-after:auto}h2{text-align:center;font-size:14pt;margin:0 0 4mm;font-weight:700}.meta{margin:0 0 3mm;font-size:8pt;line-height:1.4}table{border-collapse:collapse;width:100%;font-size:7pt;color:#111;table-layout:auto}th,td{border:.25mm solid #666;padding:1mm .7mm;white-space:normal;overflow-wrap:anywhere;word-break:break-word}th{background:#e9edf0}svg{display:block;width:100%;height:100%;max-width:100%;max-height:100%;border:0}.plot-page{padding:3mm;display:flex;align-items:center;justify-content:center}.plot-page svg{width:100%;height:100%;object-fit:contain}@media screen{body{background:#e5e7eb}.print-page{margin:12px auto;box-shadow:0 1px 8px #999}.note{font:14px Arial,sans-serif;text-align:center;margin:12px;padding:10px;background:#fff7d6}}@media print{.note{display:none}}
+ </style></head><body><div class="note">印刷画面が開いたら、送信先で「PDFとして保存」を選択してください。保存データは印刷前にブラウザ内へ自動保存済みです。</div><section class="print-page"><h2>境界測量　観測手簿</h2><div class="meta">${pageMeta1}</div>${obs}</section><section class="print-page"><h2>放射法測点座標計算簿</h2><div class="meta">${pageMeta2}</div>${coords}</section><section class="print-page plot-page">${svg}</section><script>window.addEventListener('load',()=>{requestAnimationFrame(()=>setTimeout(()=>window.print(),350));});<\/script></body></html>`;
+ printWindow.document.open();printWindow.document.write(html);printWindow.document.close();
+}
+
 function printPDF(){downloadPDF()}
 
 function currentAppState(){const ids=['sx','sy','bx','by','station','stationX','stationY','backsight','backX','backY','factor','backAngle','backDistance','pointCount','paper','scale'];const fields={};ids.forEach(id=>{const el=document.getElementById(id);if(el)fields[id]=el.value});return {version:3,savedAt:new Date().toISOString(),fields,points,lastSx,lastSy,lastBoundary}}

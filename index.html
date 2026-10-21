@@ -113,7 +113,27 @@ function dmsFormat(deg){let t=Math.round((((deg%360)+360)%360)*3600);return `${S
 function numeric(id,label){const s=document.getElementById(id).value.trim();if(!s)throw new Error(`「${label}」を入力してください。`);const n=Number(s.replace(/,/g,''));if(!Number.isFinite(n))throw new Error(`「${label}」は数値で入力してください。`);return n}
 function resizePoints(){const count=+document.getElementById('pointCount').value;document.getElementById('countLabel').textContent=count;while(points.length<count)points.push({name:`P${points.length+1}`,angle:'',distance:''});points=points.slice(0,count);points.forEach((p,i)=>{if(!p.name)p.name=`P${i+1}`});renderInputRows();scheduleAutosave()}
 function renderInputRows(){document.getElementById('inputRows').innerHTML=points.map((p,i)=>`<tr><td>${i+1}</td><td><input data-row="${i}" data-col="0" aria-label="点名${i+1}" value="${escapeAttr(p.name)}" oninput="updatePoint(${i},'name',this.value)"></td><td><input data-row="${i}" data-col="1" aria-label="観測角${i+1}" inputmode="numeric" value="${escapeAttr(p.angle)}" oninput="updatePoint(${i},'angle',this.value)"></td><td><input data-row="${i}" data-col="2" aria-label="水平距離${i+1}" inputmode="decimal" value="${escapeAttr(p.distance)}" oninput="updatePoint(${i},'distance',this.value)"></td></tr>`).join('');document.querySelectorAll('#inputRows input').forEach(el=>el.addEventListener('keydown',navigateObservationInputs))}
-function navigateObservationInputs(e){if(e.isComposing||e.keyCode===229)return;const el=e.target,row=+el.dataset.row,col=+el.dataset.col;let nr=row,nc=col;if(e.key==='Enter'||e.key==='ArrowDown'){e.preventDefault();if(col<2)nc=col+1;else{nr=Math.min(points.length-1,row+1);nc=0}}else if(e.key==='ArrowUp'){e.preventDefault();if(col>0)nc=col-1;else{nr=Math.max(0,row-1);nc=2}}else if(e.key==='ArrowRight'){if(el.selectionStart!==el.selectionEnd)return;e.preventDefault();if(col<2)nc=col+1;else{nr=Math.min(points.length-1,row+1);nc=0}}else if(e.key==='ArrowLeft'){if(el.selectionStart!==el.selectionEnd)return;e.preventDefault();if(col>0)nc=col-1;else{nr=Math.max(0,row-1);nc=2}}else return;const next=document.querySelector(`#inputRows input[data-row="${nr}"][data-col="${nc}"]`);if(next)next.focus()}
+function navigateObservationInputs(e){
+ if(e.isComposing||e.keyCode===229)return;
+ const el=e.target;
+ const inputs=Array.from(document.querySelectorAll('#inputRows input[data-row][data-col]'));
+ const idx=inputs.indexOf(el); if(idx<0)return;
+ const row=Number(el.dataset.row),col=Number(el.dataset.col);
+ let next=null;
+ if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+  e.preventDefault(); const targetRow=row+(e.key==='ArrowDown'?1:-1);
+  next=document.querySelector(`#inputRows input[data-row="${targetRow}"][data-col="${col}"]`);
+ }else if(e.key==='ArrowRight'){
+  if(el.selectionStart!==el.selectionEnd)return;
+  e.preventDefault();next=inputs[idx+1]||null;
+ }else if(e.key==='ArrowLeft'){
+  if(el.selectionStart!==el.selectionEnd)return;
+  e.preventDefault();next=inputs[idx-1]||null;
+ }else if(e.key==='Enter'){
+  e.preventDefault();next=inputs[idx+1]||null;
+ }else return;
+ if(next)next.focus();
+}
 function escapeAttr(s){return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function updatePoint(i,key,val){points[i][key]=val;scheduleAutosave()}
 function clearBoundary(){['station','stationX','stationY','backsight','backX','backY','factor','backAngle','backDistance'].forEach(id=>document.getElementById(id).value='');points=Array.from({length:+document.getElementById('pointCount').value},(_,i)=>({name:`P${i+1}`,angle:'',distance:''}));renderInputRows();document.getElementById('boundaryResults').classList.add('hidden');document.getElementById('boundaryError').textContent='';lastBoundary=null}
@@ -149,33 +169,50 @@ function encodeCP932(text){const out=[];for(const ch of text){const bytes=CP932_
 function downloadSima(){if(!lastBoundary)return;const lines=['A00,',...lastBoundary.results.map((p,i)=>`A01,${i+1},${p.name},${p.x.toFixed(3)},${p.y.toFixed(3)},0.000,`),'A99,'];const bytes=encodeCP932(lines.join('\r\n')+'\r\n');const blob=new Blob([bytes],{type:'application/octet-stream'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TREND-ONE_coordinates.sim';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 async function downloadPDF(){
  if(!lastBoundary){alert('先に境界測量の計算を実行してください。');return;}
+ if(typeof html2pdf==='undefined'){alert('PDF生成機能を読み込めません。インターネット接続を確認してから再度お試しください。');return;}
  const d=lastBoundary,obs=document.getElementById('observationTable').outerHTML,coords=document.getElementById('coordinateTable').outerHTML,svg=document.getElementById('plot').outerHTML,paper=document.getElementById('paper').value;
  const area=document.getElementById('printArea');
- const pageWidth=paper==='A3'?420:297, contentWidth=paper==='A3'?404:281;
+ const pageWidth=paper==='A3'?420:297, pageHeight=paper==='A3'?297:210;
  area.innerHTML=`
- <section class="pdf-page" style="width:${contentWidth}mm;box-sizing:border-box;padding:8mm;background:#fff;color:#111;font-family:Arial,'Noto Sans JP',sans-serif">
+ <section class="pdf-page pdf-observation">
   <h2>境界測量　観測手簿</h2>
   <div class="pdf-meta">器械点：${escapeHTML(d.station)}（X=${d.sx.toFixed(3)}、Y=${d.sy.toFixed(3)}）　後視点：${escapeHTML(d.backsight)}（X=${d.bx.toFixed(3)}、Y=${d.by.toFixed(3)}）<br>縮尺係数：${d.factor.toFixed(6)}　後視点までの水平距離：${d.backDistance.toFixed(3)} m</div>
   ${obs}
  </section>
- <section class="pdf-page" style="width:${contentWidth}mm;box-sizing:border-box;padding:8mm;background:#fff;color:#111;font-family:Arial,'Noto Sans JP',sans-serif">
+ <section class="pdf-page pdf-coordinates">
   <h2>放射法測点座標計算簿</h2>
   <div class="pdf-meta">器械点：${escapeHTML(d.station)}　既知点方向角 T：${dmsFormat(d.base)}　縮尺係数：${d.factor.toFixed(6)}</div>
   ${coords}
  </section>
- <section class="pdf-page pdf-plot-page" style="width:${pageWidth}mm;box-sizing:border-box;padding:5mm;background:#fff;color:#111">
+ <section class="pdf-page pdf-plot-page">
   <h2>測点プロット図</h2>${svg}
  </section>`;
- area.querySelectorAll('.pdf-page').forEach((p,i)=>{p.style.background='#fff';p.style.color='#111';p.style.overflow='visible';p.style.margin='0';p.style.pageBreakAfter=i===2?'auto':'always';p.style.breakAfter=i===2?'auto':'page'});
- area.querySelectorAll('h2').forEach(h=>{h.style.textAlign='center';h.style.fontSize='15pt';h.style.margin='0 0 6mm'});
- area.querySelectorAll('.pdf-meta').forEach(m=>{m.style.fontSize='9pt';m.style.lineHeight='1.5';m.style.marginBottom='5mm'});
- area.querySelectorAll('table').forEach(t=>{t.style.borderCollapse='collapse';t.style.width='100%';t.style.tableLayout='auto';t.style.fontSize='8pt';t.style.color='#111';t.querySelectorAll('th,td').forEach(c=>{c.style.border='1px solid #666';c.style.padding='2mm 1.2mm';c.style.fontSize='8pt';c.style.color='#111';c.style.whiteSpace='normal';c.style.overflowWrap='anywhere'});t.querySelectorAll('thead').forEach(x=>x.style.display='table-header-group');t.querySelectorAll('tr').forEach(x=>{x.style.breakInside='avoid';x.style.pageBreakInside='avoid'})});
- const plotSvg=area.querySelector('.pdf-plot-page svg');if(plotSvg){plotSvg.style.display='block';plotSvg.style.width='100%';plotSvg.style.height='auto';plotSvg.style.maxHeight='180mm';plotSvg.setAttribute('width','100%');plotSvg.setAttribute('height','auto')}
+ area.querySelectorAll('.pdf-page').forEach((p,i)=>{
+  p.style.cssText=`width:${pageWidth}mm;min-height:${pageHeight}mm;box-sizing:border-box;padding:${i===2?'5':'8'}mm;margin:0;background:#fff;color:#111;font-family:Arial,'Noto Sans JP',sans-serif;overflow:visible;break-after:${i===2?'auto':'page'};page-break-after:${i===2?'auto':'always'}`;
+ });
+ area.querySelectorAll('h2').forEach(h=>{h.style.cssText='text-align:center;font-size:14pt;line-height:1.2;margin:0 0 4mm;font-weight:bold;color:#111'});
+ area.querySelectorAll('.pdf-meta').forEach(m=>{m.style.cssText='font-size:8pt;line-height:1.35;margin:0 0 3mm;color:#111'});
+ area.querySelectorAll('table').forEach((t,ti)=>{
+  t.style.cssText='border-collapse:collapse;width:100%;table-layout:fixed;color:#111;font-size:'+(ti===0?'7':'5.5')+'pt';
+  t.querySelectorAll('th,td').forEach(c=>{c.style.cssText='border:0.25mm solid #666;padding:1mm 0.7mm;font-size:inherit;line-height:1.15;color:#111;white-space:normal;overflow-wrap:anywhere;word-break:break-word;vertical-align:middle'});
+  t.querySelectorAll('th').forEach(c=>{c.style.backgroundColor='#e9edf0';c.style.fontWeight='bold'});
+  t.querySelectorAll('thead').forEach(x=>x.style.display='table-header-group');
+  t.querySelectorAll('tr').forEach(x=>{x.style.breakInside='avoid';x.style.pageBreakInside='avoid'});
+ });
+ const plotSvg=area.querySelector('.pdf-plot-page svg');
+ if(plotSvg){plotSvg.style.cssText='display:block;width:100%;height:auto;max-height:none;margin:0;border:0';plotSvg.setAttribute('width','100%');plotSvg.removeAttribute('height');}
  try{
-  if(typeof html2pdf==='undefined')throw new Error('PDF生成ライブラリを読み込めません。インターネット接続を確認してください。');
-  area.style.display='block';area.style.position='fixed';area.style.left='-10000px';area.style.top='0';area.style.zIndex='-1';area.style.width=pageWidth+'mm';area.style.background='#fff';
-  await html2pdf().set({margin:0,filename:`境界測量_${String(d.station).replace(/[\\/:*?"<>|]/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0},jsPDF:{unit:'mm',format:paper.toLowerCase(),orientation:'landscape'},pagebreak:{mode:['css','legacy'],before:'.pdf-page + .pdf-page'}}).from(area).save();
- }catch(e){alert('PDFを保存できませんでした。'+e.message)}finally{area.style.display='none';area.style.position='';area.style.left='';area.style.top='';area.style.zIndex='';area.style.width='';}
+  area.style.cssText=`display:block;position:fixed;left:0;top:0;z-index:-1;width:${pageWidth}mm;background:#fff;color:#111;`;
+  await html2pdf().set({
+   margin:0,
+   filename:`境界測量_${String(d.station).replace(/[\\/:*?"<>|]/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`,
+   image:{type:'jpeg',quality:0.98},
+   html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0,windowWidth:Math.ceil(pageWidth*96/25.4)},
+   jsPDF:{unit:'mm',format:paper.toLowerCase(),orientation:'landscape'},
+   pagebreak:{mode:['css','legacy'],avoid:['tr','h2','.pdf-meta']}
+  }).from(area).save();
+ }catch(e){alert('PDFを保存できませんでした。'+(e&&e.message?e.message:'原因不明のエラーです。'));}
+ finally{area.innerHTML='';area.style.cssText='display:none';}
 }
 function printPDF(){downloadPDF()}
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = "survey-app-v3-local-pdf-120";
+const CACHE_NAME = "survey-app-v4-pdf-layout-local-pdf-120";
 const APP_FILES = ["./", "./index.html", "./manifest.json", "./favicon.png"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_FILES)));

@@ -170,46 +170,51 @@ function downloadSima(){if(!lastBoundary)return;const lines=['A00,',...lastBound
 async function downloadPDF(){
  if(!lastBoundary){alert('先に境界測量の計算を実行してください。');return;}
  if(typeof html2pdf==='undefined'){alert('PDF生成機能を読み込めません。インターネット接続を確認してから再度お試しください。');return;}
- const d=lastBoundary,obs=document.getElementById('observationTable').outerHTML,coords=document.getElementById('coordinateTable').outerHTML,svg=document.getElementById('plot').outerHTML,paper=document.getElementById('paper').value;
- const area=document.getElementById('printArea');
+ const d=lastBoundary;
+ const obs=document.getElementById('observationTable').outerHTML;
+ const coords=document.getElementById('coordinateTable').outerHTML;
+ const svg=document.getElementById('plot').outerHTML;
+ const paper=document.getElementById('paper').value;
  const pageWidth=paper==='A3'?420:297, pageHeight=paper==='A3'?297:210;
+ const area=document.getElementById('printArea');
  area.innerHTML=`
- <section class="pdf-page pdf-observation">
-  <h2>境界測量　観測手簿</h2>
-  <div class="pdf-meta">器械点：${escapeHTML(d.station)}（X=${d.sx.toFixed(3)}、Y=${d.sy.toFixed(3)}）　後視点：${escapeHTML(d.backsight)}（X=${d.bx.toFixed(3)}、Y=${d.by.toFixed(3)}）<br>縮尺係数：${d.factor.toFixed(6)}　後視点までの水平距離：${d.backDistance.toFixed(3)} m</div>
-  ${obs}
- </section>
- <section class="pdf-page pdf-coordinates">
-  <h2>放射法測点座標計算簿</h2>
-  <div class="pdf-meta">器械点：${escapeHTML(d.station)}　既知点方向角 T：${dmsFormat(d.base)}　縮尺係数：${d.factor.toFixed(6)}</div>
-  ${coords}
- </section>
- <section class="pdf-page pdf-plot-page">
-  <h2>測点プロット図</h2>${svg}
- </section>`;
- area.querySelectorAll('.pdf-page').forEach((p,i)=>{
-  p.style.cssText=`width:${pageWidth}mm;min-height:${pageHeight}mm;box-sizing:border-box;padding:${i===2?'5':'8'}mm;margin:0;background:#fff;color:#111;font-family:Arial,'Noto Sans JP',sans-serif;overflow:visible;break-after:${i===2?'auto':'page'};page-break-after:${i===2?'auto':'always'}`;
+  <section class="print-page pdf-observation">
+   <h2>境界測量 観測手簿</h2>
+   <div class="meta">器械点：${escapeHTML(d.station)}（X=${d.sx.toFixed(3)}、Y=${d.sy.toFixed(3)}）　後視点：${escapeHTML(d.backsight)}（X=${d.bx.toFixed(3)}、Y=${d.by.toFixed(3)}）<br>縮尺係数：${d.factor.toFixed(6)}</div>
+   ${obs}
+  </section>
+  <section class="print-page pdf-coordinates">
+   <h2>放射法測点座標計算簿</h2>
+   <div class="meta">器械点：${escapeHTML(d.station)}　既知点方向角 T：${dmsFormat(d.base)}</div>
+   ${coords}
+  </section>
+  <section class="print-page plot-print-page">${svg}</section>`;
+ // 元の印刷版と同じ帳票構成を維持し、印刷ダイアログだけを使わずPDF化する。
+ area.querySelectorAll('.print-page').forEach((page,i)=>{
+  page.style.cssText=`display:block;box-sizing:border-box;width:${pageWidth}mm;min-height:${pageHeight}mm;padding:${i===2?'0':'8mm'};margin:0;background:#fff;color:#111;font-family:Arial,'Noto Sans JP',sans-serif;break-after:${i===2?'auto':'page'};page-break-after:${i===2?'auto':'always'};`;
  });
- area.querySelectorAll('h2').forEach(h=>{h.style.cssText='text-align:center;font-size:14pt;line-height:1.2;margin:0 0 4mm;font-weight:bold;color:#111'});
- area.querySelectorAll('.pdf-meta').forEach(m=>{m.style.cssText='font-size:8pt;line-height:1.35;margin:0 0 3mm;color:#111'});
+ area.querySelectorAll('h2').forEach(h=>h.style.cssText='text-align:center;font-size:15pt;line-height:1.2;margin:0 0 4mm;font-weight:bold;color:#111');
+ area.querySelectorAll('.meta').forEach(m=>m.style.cssText='margin:0 0 3mm;font-size:9pt;line-height:1.35;color:#111');
  area.querySelectorAll('table').forEach((t,ti)=>{
-  t.style.cssText='border-collapse:collapse;width:100%;table-layout:fixed;color:#111;font-size:'+(ti===0?'7':'5.5')+'pt';
-  t.querySelectorAll('th,td').forEach(c=>{c.style.cssText='border:0.25mm solid #666;padding:1mm 0.7mm;font-size:inherit;line-height:1.15;color:#111;white-space:normal;overflow-wrap:anywhere;word-break:break-word;vertical-align:middle'});
-  t.querySelectorAll('th').forEach(c=>{c.style.backgroundColor='#e9edf0';c.style.fontWeight='bold'});
+  t.style.cssText=`border-collapse:collapse;width:100%;table-layout:auto;color:#111;font-size:${ti===0?'8':'6'}pt`;
+  t.querySelectorAll('th,td').forEach(c=>c.style.cssText='border:0.25mm solid #666;padding:1mm 0.8mm;line-height:1.15;color:#111;white-space:normal;overflow-wrap:anywhere;vertical-align:middle');
+  t.querySelectorAll('th').forEach(c=>{c.style.backgroundColor='#e5ece6';c.style.fontWeight='700'});
   t.querySelectorAll('thead').forEach(x=>x.style.display='table-header-group');
   t.querySelectorAll('tr').forEach(x=>{x.style.breakInside='avoid';x.style.pageBreakInside='avoid'});
  });
- const plotSvg=area.querySelector('.pdf-plot-page svg');
- if(plotSvg){plotSvg.style.cssText='display:block;width:100%;height:auto;max-height:none;margin:0;border:0';plotSvg.setAttribute('width','100%');plotSvg.removeAttribute('height');}
+ const plotSvg=area.querySelector('.plot-print-page svg');
+ if(plotSvg){plotSvg.style.cssText=`display:block;width:${pageWidth}mm;height:${pageHeight}mm;max-height:none;border:0;border-radius:0;margin:0;background:#fff`;plotSvg.setAttribute('width',String(pageWidth));plotSvg.setAttribute('height',String(pageHeight));}
  try{
-  area.style.cssText=`display:block;position:fixed;left:0;top:0;z-index:-1;width:${pageWidth}mm;background:#fff;color:#111;`;
+  // キャプチャ対象を画面内に置く。display:none や負の z-index は空白PDFの原因になるため使用しない。
+  area.style.cssText=`display:block;position:fixed;left:0;top:0;z-index:2147483647;width:${pageWidth}mm;margin:0;padding:0;background:#fff;color:#111;`;
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   await html2pdf().set({
    margin:0,
    filename:`境界測量_${String(d.station).replace(/[\\/:*?"<>|]/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`,
    image:{type:'jpeg',quality:0.98},
-   html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0,windowWidth:Math.ceil(pageWidth*96/25.4)},
+   html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0,windowWidth:Math.ceil(pageWidth*96/25.4),logging:false},
    jsPDF:{unit:'mm',format:paper.toLowerCase(),orientation:'landscape'},
-   pagebreak:{mode:['css','legacy'],avoid:['tr','h2','.pdf-meta']}
+   pagebreak:{mode:['css','legacy'],avoid:['tr']}
   }).from(area).save();
  }catch(e){alert('PDFを保存できませんでした。'+(e&&e.message?e.message:'原因不明のエラーです。'));}
  finally{area.innerHTML='';area.style.cssText='display:none';}

@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="favicon.png">
 <link rel="manifest" href="manifest.json">
-<title>測量計算アプリ Ver2.3</title>
+<title>測量計算アプリ Ver2.4</title>
 <style>
 :root{--green:#477b58;--green2:#e8f1e9;--line:#cbd5ce;--ink:#1f2933;--muted:#5b6570;--bg:#f3f6f4}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Yu Gothic","Meiryo",sans-serif;font-size:16px}
@@ -36,7 +36,7 @@ table{border-collapse:collapse;width:100%;font-size:13px;background:#fff}th,td{b
 </head>
 <body>
 <header>
-<h1>📐 測量計算アプリ <span style="font-size:14px;font-weight:700;color:#477b58;vertical-align:middle">Ver2.3</span></h1>
+<h1>📐 測量計算アプリ <span style="font-size:14px;font-weight:700;color:#477b58;vertical-align:middle">Ver2.4</span></h1>
 <nav>
 <button class="tab active" id="tabST" onclick="switchPage('st')">ST計算</button>
 <button class="tab" id="tabBoundary" onclick="switchPage('boundary')">境界測量</button>
@@ -74,6 +74,14 @@ table{border-collapse:collapse;width:100%;font-size:13px;background:#fff}th,td{b
 <div class="table-wrap"><table id="inputTable"><thead><tr><th>No.</th><th>点名</th><th>観測角（7桁）</th><th>水平距離（m）</th></tr></thead><tbody id="inputRows"></tbody></table></div>
 <div class="actions"><button onclick="calculateBoundary()">計算する</button><button class="secondary" onclick="newBoundaryCalculation()">新しい計算を開始</button></div>
 <div id="boundaryError" class="error"></div><div id="distanceWarning" class="warning hidden" role="status"></div><div id="autosaveStatus" class="autosave-status" aria-live="polite">ブラウザ保存を準備しています。</div>
+<div class="panel" style="margin-top:12px;background:#f8faf8">
+<h3 style="margin-top:0">測量データの保存・受け渡し</h3>
+<p class="hint">ブラウザへの自動保存に加え、案件を端末内に複数保存したり、ファイルに書き出して別の端末へ移したりできます。</p>
+<div class="grid"><div><label for="projectName">案件名</label><input id="projectName" placeholder="例：○○地区 境界測量"></div><div><label for="savedProjectList">この端末に保存した案件</label><select id="savedProjectList"><option value="">保存済み案件を選択</option></select></div></div>
+<div class="actions"><button onclick="saveNamedProject()">この端末に案件を保存</button><button class="secondary" onclick="loadNamedProject()">選択した案件を読み込む</button><button class="secondary" onclick="deleteNamedProject()">選択した案件を削除</button></div>
+<div class="actions"><button onclick="exportProjectFile()">案件ファイルを書き出す</button><button class="secondary" onclick="document.getElementById('projectFileInput').click()">案件ファイルを読み込む</button><input id="projectFileInput" type="file" accept=".json,application/json" style="display:none" onchange="importProjectFile(event)"></div>
+<p class="hint">案件ファイルはJSON形式です。スマホで書き出したファイルをPCへ送り、PC側のこのアプリで読み込めます。端末内の保存とファイル保存は別々です。既存の自動保存データは、読み込み操作で消去されませんが、読み込んだ内容が現在の作業状態になります。</p>
+</div>
 </div>
 <div id="boundaryResults" class="hidden">
 <div class="panel"><h2>観測手簿</h2><div class="table-wrap"><table id="observationTable"></table></div></div>
@@ -90,7 +98,7 @@ table{border-collapse:collapse;width:100%;font-size:13px;background:#fff}th,td{b
 <div id="printArea"></div>
 <script>
 let lastSx="",lastSy="",points=[],lastBoundary=null;
-const AUTOSAVE_KEY="survey-app-local-v4"; let autosaveTimer=null;
+const AUTOSAVE_KEY="survey-app-local-v4"; const PROJECTS_KEY="survey-app-projects-v1"; let autosaveTimer=null;
 function switchPage(page){document.getElementById('stPage').classList.toggle('hidden',page!=='st');document.getElementById('boundaryPage').classList.toggle('hidden',page!=='boundary');document.getElementById('tabST').classList.toggle('active',page==='st');document.getElementById('tabBoundary').classList.toggle('active',page==='boundary');}
 function stKey(e,next,prev){if(e.key==='Enter'||e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();document.getElementById(next).focus()}if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();document.getElementById(prev).focus()}}
 function clearSTError(){['sx','sy','bx','by'].forEach(id=>document.getElementById(id).style.border='');document.getElementById('stError').textContent=''}
@@ -192,7 +200,16 @@ function downloadPDF(){
 
 function printPDF(){downloadPDF()}
 
-function currentAppState(){const ids=['sx','sy','bx','by','station','stationX','stationY','backsight','backX','backY','factor','backAngle','backDistance','pointCount','paper','scale'];const fields={};ids.forEach(id=>{const el=document.getElementById(id);if(el)fields[id]=el.value});return {version:3,savedAt:new Date().toISOString(),fields,points,lastSx,lastSy,lastBoundary}}
+function currentAppState(){const ids=['sx','sy','bx','by','station','stationX','stationY','backsight','backX','backY','factor','backAngle','backDistance','pointCount','paper','scale'];const fields={};ids.forEach(id=>{const el=document.getElementById(id);if(el)fields[id]=el.value});return {format:'survey-app-project',version:1,savedAt:new Date().toISOString(),fields,points:JSON.parse(JSON.stringify(points)),lastSx,lastSy,lastBoundary:lastBoundary?JSON.parse(JSON.stringify(lastBoundary)):null}}
+function readSavedProjects(){try{const v=JSON.parse(localStorage.getItem(PROJECTS_KEY)||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
+function refreshProjectList(selectId=''){const sel=document.getElementById('savedProjectList');if(!sel)return;const arr=readSavedProjects();sel.innerHTML='<option value="">保存済み案件を選択</option>'+arr.map(p=>`<option value="${escapeAttr(p.id)}">${escapeHTML(p.name)}（${new Date(p.savedAt).toLocaleString('ja-JP')}）</option>`).join('');if(selectId)sel.value=selectId}
+function safeProjectName(){return (document.getElementById('projectName').value||'測量案件').trim().slice(0,100)||'測量案件'}
+function saveNamedProject(){try{const state=currentAppState(),name=safeProjectName(),arr=readSavedProjects(),id='p_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);arr.unshift({id,name,savedAt:state.savedAt,state});localStorage.setItem(PROJECTS_KEY,JSON.stringify(arr));refreshProjectList(id);setAutosaveStatus(`案件「${name}」をこの端末に保存しました`)}catch(e){alert('案件を保存できませんでした。ブラウザの保存容量を確認してください。')}}
+function applyProjectState(state){if(!state||typeof state!=='object'||!state.fields||!Array.isArray(state.points))throw new Error('案件ファイルの形式が正しくありません。');const ids=['sx','sy','bx','by','station','stationX','stationY','backsight','backX','backY','factor','backAngle','backDistance','pointCount','paper','scale'];ids.forEach(id=>{const el=document.getElementById(id);if(el&&Object.prototype.hasOwnProperty.call(state.fields,id))el.value=String(state.fields[id]??'')});points=state.points.map(p=>({name:String(p.name??''),angle:String(p.angle??''),distance:String(p.distance??'')})).slice(0,120);lastSx=String(state.lastSx??'');lastSy=String(state.lastSy??'');lastBoundary=state.lastBoundary&&Array.isArray(state.lastBoundary.results)?state.lastBoundary:null;document.getElementById('countLabel').textContent=document.getElementById('pointCount').value;renderInputRows();if(lastBoundary){renderBoundaryResults();document.getElementById('boundaryResults').classList.remove('hidden')}else{document.getElementById('boundaryResults').classList.add('hidden')}document.getElementById('projectName').value=state.projectName||document.getElementById('projectName').value;saveLocalNow();switchPage('boundary')}
+function loadNamedProject(){const id=document.getElementById('savedProjectList').value;if(!id){alert('読み込む案件を選択してください。');return}const item=readSavedProjects().find(p=>p.id===id);if(!item)return;if(!confirm(`「${item.name}」を読み込みます。現在の作業状態は置き換わります。続行しますか？`))return;try{applyProjectState({...item.state,projectName:item.name});document.getElementById('projectName').value=item.name;setAutosaveStatus(`案件「${item.name}」を読み込みました`)}catch(e){alert('案件を読み込めませんでした：'+e.message)}}
+function deleteNamedProject(){const id=document.getElementById('savedProjectList').value;if(!id){alert('削除する案件を選択してください。');return}const arr=readSavedProjects(),item=arr.find(p=>p.id===id);if(!item)return;if(!confirm(`保存済み案件「${item.name}」をこの端末から削除しますか？`))return;localStorage.setItem(PROJECTS_KEY,JSON.stringify(arr.filter(p=>p.id!==id)));refreshProjectList();setAutosaveStatus(`案件「${item.name}」を削除しました`)}
+function exportProjectFile(){try{const state=currentAppState();state.projectName=safeProjectName();const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);const clean=state.projectName.replace(/[\/:*?"<>|]/g,'_');a.download=`${clean}_${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);saveLocalNow()}catch(e){alert('案件ファイルを書き出せませんでした。')}}
+function importProjectFile(event){const file=event.target.files&&event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const state=JSON.parse(String(reader.result));if(state.format!=='survey-app-project'&&(!state.fields||!Array.isArray(state.points)))throw new Error('対応していないファイル形式です。');if(!confirm('案件ファイルを読み込みます。現在の作業状態は置き換わります。続行しますか？'))return;applyProjectState(state);if(state.projectName)document.getElementById('projectName').value=String(state.projectName).slice(0,100);setAutosaveStatus(`案件ファイル「${file.name}」を読み込みました`)}catch(e){alert('案件ファイルを読み込めませんでした。ファイルが正しいか確認してください。\n'+e.message)}finally{event.target.value=''}};reader.onerror=()=>{alert('ファイルを読み取れませんでした。');event.target.value=''};reader.readAsText(file,'UTF-8')}
 function setAutosaveStatus(text){const el=document.getElementById('autosaveStatus');if(el)el.textContent=text}
 function saveLocalNow(){try{localStorage.setItem(AUTOSAVE_KEY,JSON.stringify(currentAppState()));setAutosaveStatus('ブラウザに自動保存済み（この端末・ブラウザ内）')}catch(e){setAutosaveStatus('保存に失敗しました。ブラウザの保存容量を確認してください。')}}
 function scheduleAutosave(){setAutosaveStatus('保存中…');clearTimeout(autosaveTimer);autosaveTimer=setTimeout(saveLocalNow,250)}
@@ -200,7 +217,7 @@ function restoreLocal(){try{const raw=localStorage.getItem(AUTOSAVE_KEY);if(!raw
 function newBoundaryCalculation(){if(!confirm('現在の入力内容を新しい計算に切り替えますか？ 直前の入力内容は過去計算一覧には保存されません。必要な場合は先にバックアップしてください。'))return;clearBoundary();scheduleAutosave()}
 function setupAutosave(){document.querySelectorAll('input,select').forEach(el=>{el.addEventListener('input',scheduleAutosave);el.addEventListener('change',scheduleAutosave)});window.addEventListener('beforeunload',saveLocalNow)}
 
-restoreLocal();if(!points.length)resizePoints();setupAutosave();
+restoreLocal();if(!points.length)resizePoints();refreshProjectList();setupAutosave();
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js').catch(()=>{}))}
 </script>
 </body></html>
